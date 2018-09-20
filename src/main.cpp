@@ -191,6 +191,13 @@ void run_algorithm(std::vector<TSolution*> &pop, TSolution* &best)
                    params_string["ls2"], params_double["ls2"], params_string["accept"], params_double["accept"]);
         pop[0] = best;
     }
+    if (ALGO == "SA") // same familly
+    {
+        double *next_opt_params = new double[2]{params_double["m"], params_double["lambda"]};
+        best = SA(params_string["init_sol"], params_double["init_sol"], params_int["Kmayus"], params_int["kmax"], params_int["MAX_TIME"], 
+                   params_string["VNS_next_opt"], next_opt_params, params_string["shake"], params_string["ls1"], params_double["ls1"], params_double["accept"]);
+        pop[0] = best;
+    }
     /*
     if (ALGO == "TS") // same familly
     {
@@ -202,8 +209,7 @@ void run_algorithm(std::vector<TSolution*> &pop, TSolution* &best)
     if (ALGO == "GA") // same familly
     {
         GA(params_int["Gmax"], params_int["MAX_TIME"], pop, params_int["POP_SIZE"], params_double["lambda"], params_string["init_sol"], params_double["init_sol"], 
-    params_string["sel_mode"], params_string["cross_mode"], params_string["mut_mode"], params_double["mut_prob"],
-    params_string["repl_mode"]);
+            params_string["sel_mode"], params_string["cross_mode"], params_string["mut_mode"], params_double["mut_prob"], params_string["repl_mode"]);
         best = find_best(pop, params_int["POP_SIZE"]);
     }
 }

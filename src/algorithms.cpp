@@ -289,19 +289,87 @@ TSolution* shake_rand_neighborhood(TSolution* x, int i)
     return out;   
 }
 
+/******************************************************************************
+ * Basic Simulated Annealing Algorithm
+ * Author: Christian Cintrano
+ * Date: 2018-09-20
+ * Updated: 2018-09-20
+ * Version: 1.0
+ * Implementation of a SA to solve the p-median problem
+ * ****************************************************************************/
+TSolution* SA(std::string gen_mode, double gen_param, int Kmayus, int kmax, int max_time, std::string next_opt, double *next_opt_param,
+              std::string shake_opt, std::string ls1, double ls1_param, double accept_param)
+{
+    TSolution* xprime; 
+    xprime = initial_solution(gen_mode, gen_param);
+
+    log("Initial individual: ", false);
+    if (DEBUG) print_solution(xprime);
+
+    local_search(xprime, ls1, ls1_param);
+
+    log("Initial individual: ", false);
+    if (DEBUG) print_solution(xprime);
+
+    int counter = 0;
+    log("---- G " + std::to_string(counter) + " Max time: " + std::to_string(max_time));
+
+    bool restart = true; 
+
+    int kindex;
+
+    // TIMER
+    int current_time;
+    std::chrono::steady_clock::time_point t_start, t_current;
+    t_start= std::chrono::steady_clock::now();
+    t_current= std::chrono::steady_clock::now();   
+    current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+    // RUN
+
+    TSolution* x;
+    int index, j;
+    log(std::to_string(current_time));
+    while (restart && (current_time < max_time)) // General loop
+    { 
+        restart = false;
+        if (DEBUG)
+        {
+            counter++;
+            if (counter % 50 == 0)
+            {
+                log("---- G " + std::to_string(counter) + " " + std::to_string(xprime->fitness));
+            }
+        }
+
+        j = 1;
+        while(!restart && j <= Kmayus) // Number of no new optimal found
+        {
+            index = 1;
+            while(!restart && index <= kmax) { // kindex neighbourhood
+
+                kindex = next_k(next_opt, index, next_opt_param, kmax);
+                shake(shake_opt, xprime, x, kindex);
+                //local_search(x, ls2, ls2_param);
+                restart = acceptation("SA", accept_param, xprime, x); // true if is new optimal
+                
+                index++;
+            }
+            j++;
+        }
+        t_current= std::chrono::steady_clock::now();  
+        current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count(); 
+    }
+
+    return xprime;
+}
 
 /******************************************************************************
- * Test code to the Basic Genetic Algorithm
+ * Basic Genetic Algorithm
  * Author: Christian Cintrano
  * Date: 2018-03-16
  * Updated: 2018-04-10
  * Version: 1.6
  * Implementation of a GA to solve the p-median problem
- *
- * Drezner, Z., Brimberg, J., Mladenović, N., & Salhi, S. (2015).
- * New heuristic algorithms for solving the planar p-median problem.
- * Computers & Operations Research, 62, 296–304. 
- * http://doi.org/10.1016/J.COR.2014.05.010
  * ****************************************************************************/
 void generate_population(std::vector<TSolution*> &pop, int pop_size, std::string gen_mode, double gen_param, TSolution* &best, TSolution* &worst);
 void selection(std::string mode, std::vector<TSolution*> &pop, int pop_size, TSolution* &parent1, TSolution* &parent2);
