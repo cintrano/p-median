@@ -194,8 +194,10 @@ void run_algorithm(std::vector<TSolution*> &pop, TSolution* &best)
     if (ALGO == "SA") // same familly
     {
         double *next_opt_params = new double[2]{params_double["m"], params_double["lambda"]};
-        best = SA(params_string["init_sol"], params_double["init_sol"], params_int["Kmayus"], params_int["kmax"], params_int["MAX_TIME"], 
-                   params_string["VNS_next_opt"], next_opt_params, params_string["shake"], params_string["ls1"], params_double["ls1"], params_double["accept"]);
+        best = SA(params_string["init_sol"], params_double["init_sol"], params_int["Gmax"], params_int["MAX_TIME"], 
+                   params_string["VNS_next_opt"], next_opt_params, params_string["shake"],
+                   params_string["cooling_opt"], params_double["cooling_opt"], params_double["temperature"],
+                   params_string["ls1"], params_double["ls1"]);
         pop[0] = best;
     }
     /*
@@ -571,6 +573,18 @@ void read_args(int size, char* args[])
                     params_double["init_sol"] = std::stod(args[i]);
                 }
             }
+            if (std::strcmp(args[i], "--cooling") == 0) // Generate new solution mode
+            {
+                i++;
+                params_string["cooling_opt"] = args[i];
+                i++;
+                params_double["cooling_opt"] = std::stod(args[i]);
+            }
+            if (std::strcmp(args[i], "--temperature") == 0) // Generate new solution mode
+            {
+                i++;
+                params_double["temperature"] = std::stod(args[i]);
+            }            
             if (std::strcmp(args[i], "--change") == 0)
             {
                 i++;
@@ -626,6 +640,16 @@ void read_args(int size, char* args[])
                 params_string["repl_mode"] = args[i];
             }
             i++;
+        }
+
+        if (DEBUG)
+        {
+            i = 1;
+            while(i < size) {
+                cout << args[i] << " ";
+                i++;
+            }
+            cout << "\n";
         }
     }
     catch (std::exception const &e)

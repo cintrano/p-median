@@ -141,12 +141,14 @@ struct TSquare {
   double LB;
 };
 
-inline bool operator<(const TSquare& lhs, const TSquare& rhs)
+/*
+inline bool operator <(const TSquare* &lhs, const TSquare* &rhs)
 {
   // return lhs.UB < rhs.UB;
   //return lhs.UB < rhs.UB && lhs.top < rhs.top && lhs.right < rhs.right && lhs.bottom < rhs.bottom && lhs.left < rhs.left;
-  return (lhs.UB < rhs.UB || lhs.LB < rhs.LB) !=0;
+  return (lhs->UB < rhs->UB || lhs->LB < rhs->LB) !=0;
 }
+*/
 
 int point_nearest(double lat, double lon) // TODO: Optimize this operation to be able to use Weber operations
 {
@@ -165,15 +167,15 @@ int point_nearest(double lat, double lon) // TODO: Optimize this operation to be
     return nearest;
 }
 
-bool inSquare(TSquare &square, int i)
+bool inSquare(TSquare* &square, int i)
 {
-    return facility_points[i][2] >= square.left 
-           && facility_points[i][2] <= square.right
-           && facility_points[i][1] >= square.bottom
-           && facility_points[i][1] <= square.top;
+    return facility_points[i][2] >= square->left 
+           && facility_points[i][2] <= square->right
+           && facility_points[i][1] >= square->bottom
+           && facility_points[i][1] <= square->top;
 }
 
-int point_nearest(TSquare &square, double lat, double lon) // TODO: Optimize this operation to be able to use Weber operations
+int point_nearest(TSquare* &square, double lat, double lon) // TODO: Optimize this operation to be able to use Weber operations
 {
     int nearest = -1;
     double dist = std::numeric_limits<double>::infinity();
@@ -208,16 +210,16 @@ double LD1Problem(int index, const std::vector<double> &Dist)
     return fitness;
 }
 
-double calculateLB(TSquare &square, const std::vector<double> &Dist)
+double calculateLB(TSquare* &square, const std::vector<double> &Dist)
 {
     double fitnessTL = 0.0f;
     double fitnessTR = 0.0f;
     double fitnessBR = 0.0f;
     double fitnessBL = 0.0f;
-    int tr = point_nearest(square, square.top, square.right);
-    int br = point_nearest(square, square.bottom, square.right);
-    int bl = point_nearest(square, square.bottom, square.left);
-    int tl = point_nearest(square, square.top, square.left);
+    int tr = point_nearest(square, square->top, square->right);
+    int br = point_nearest(square, square->bottom, square->right);
+    int bl = point_nearest(square, square->bottom, square->left);
+    int tl = point_nearest(square, square->top, square->left);
 
     if (tr != -1) fitnessTR = LD1Problem(tr, Dist);
     if (br != -1) fitnessBR = LD1Problem(br, Dist);
@@ -247,33 +249,33 @@ double calculateLB(TSquare &square, const std::vector<double> &Dist)
     return fitness;
 }
 
-void calculateUB(TSquare &square, const std::vector<double> &Dist)
+void calculateUB(TSquare* &square, const std::vector<double> &Dist)
 {
     double x, y;
-    x = square.left + ((square.right - square.left) / 2.0);
-    y = square.bottom + ((square.top - square.bottom) / 2.0);
-    square.UB = point_nearest(square, y, x);
-    square.UB_fitness = LD1Problem(square.UB, Dist);
+    x = square->left + ((square->right - square->left) / 2.0);
+    y = square->bottom + ((square->top - square->bottom) / 2.0);
+    square->UB = point_nearest(square, y, x);
+    square->UB_fitness = LD1Problem(square->UB, Dist);
 }
 
-TSquare newSquare(double top, double right, double bottom, double left, const std::vector<double> &Dist)
+TSquare* newSquare(double top, double right, double bottom, double left, const std::vector<double> &Dist)
 {
-    TSquare square;
-    square.top = top;
-    square.right = right;
-    square.bottom = bottom;
-    square.left = left;
+    TSquare* square = new TSquare;
+    square->top = top;
+    square->right = right;
+    square->bottom = bottom;
+    square->left = left;
     calculateUB(square, Dist);
-    square.LB = calculateLB(square, Dist);
+    square->LB = calculateLB(square, Dist);
     return square;
 }
 
-string printSquare(TSquare &square)
+string printSquare(TSquare* &square)
 {
-    return to_string(square.UB) + "_" + to_string(square.LB);// + "[" + to_string(square.top) + "," + to_string(square.right) +  "," + to_string(square.bottom) +  "," + to_string(square.left) + "]";
+    return to_string(square->UB) + "_" + to_string(square->LB);// + "[" + to_string(square.top) + "," + to_string(square.right) +  "," + to_string(square.bottom) +  "," + to_string(square.left) + "]";
 }
 
-void divideSquare(TSquare &square, std::set<TSquare> &set, const std::vector<double> &Dist)
+void divideSquare(TSquare* &square, std::set<TSquare*> &set, const std::vector<double> &Dist)
 {
     // |-------|
     // | 1 | 2 |
@@ -281,28 +283,31 @@ void divideSquare(TSquare &square, std::set<TSquare> &set, const std::vector<dou
     // | 3 | 4 |
     // |-------|
 
-    TSquare s1, s2, s3, s4;
-    s1 = newSquare(square.top, facility_points[square.UB][2], facility_points[square.UB][1], square.left, Dist);
-    s2 = newSquare(square.top, square.right, facility_points[square.UB][1], facility_points[square.UB][2], Dist);
-    s3 = newSquare(facility_points[square.UB][1], facility_points[square.UB][2], square.bottom, square.left, Dist);
-    s4 = newSquare(facility_points[square.UB][1], square.right, square.bottom, facility_points[square.UB][2], Dist);
+    TSquare* s1;
+    TSquare* s2;
+    TSquare* s3;
+    TSquare* s4;
+    s1 = newSquare(square->top, facility_points[square->UB][2], facility_points[square->UB][1], square->left, Dist);
+    s2 = newSquare(square->top, square->right, facility_points[square->UB][1], facility_points[square->UB][2], Dist);
+    s3 = newSquare(facility_points[square->UB][1], facility_points[square->UB][2], square->bottom, square->left, Dist);
+    s4 = newSquare(facility_points[square->UB][1], square->right, square->bottom, facility_points[square->UB][2], Dist);
     set.insert(s1);
     set.insert(s2);
     set.insert(s3);
     set.insert(s4);
 }
 
-bool sameSquare(const TSquare &s1, const TSquare &s2)
+bool sameSquare(const TSquare* s1, const TSquare* s2)
 {
-    return s1.UB == s2.UB && s1.LB == s2.LB &&
-           s1.top == s2.top && s1.right == s2.right &&
-           s1.bottom == s2.bottom && s1.left == s2.left;
+    return s1->UB == s2->UB && s1->LB == s2->LB &&
+           s1->top == s2->top && s1->right == s2->right &&
+           s1->bottom == s2->bottom && s1->left == s2->left;
 }
 
 int BSSS(std::vector<double> &Dist, double epsilon) {
     // 1. The set of squares consists of a square enclosing the feasible area. The best upper bound UB∗ is the value of the objective function at the center of the square. A lower bound LB in the square is calculated.
-    std::set<TSquare> squares;
-    std::set<TSquare>::iterator it;
+    std::set<TSquare*> squares;
+    std::set<TSquare*>::iterator it;
     int UBstar;
     double UBstart_fitness;
 
@@ -330,30 +335,34 @@ int BSSS(std::vector<double> &Dist, double epsilon) {
             min_lon = lon;
         }
     }
-    TSquare first_square;
-    first_square.top = max_lat;
-    first_square.right = max_lon;
-    first_square.bottom = min_lat;
-    first_square.left = min_lon;
+    TSquare* first_square = new TSquare;
+    first_square->top = max_lat;
+    first_square->right = max_lon;
+    first_square->bottom = min_lat;
+    first_square->left = min_lon;
     calculateUB(first_square, Dist);
-    first_square.LB = calculateLB(first_square, Dist);
+    first_square->LB = calculateLB(first_square, Dist);
 
-    UBstar = first_square.UB;
-    UBstart_fitness = first_square.UB_fitness;
+    log(printSquare(first_square));
+
+    UBstar = first_square->UB;
+    UBstart_fitness = first_square->UB_fitness;
     squares.insert(first_square);
     double bound;
     while(squares.size() != 0) {//!squares.empty()) {
     // 2. The square with the smallest LB is selected and four small squares are constructed by two perpendicular lines through its center parallel to its sides.
-        TSquare square_lower_LB;
+        TSquare* square_lower_LB;
+
+    //log(printSquare(square_lower_LB));
         double lower_LB = std::numeric_limits<double>::infinity();
 
         for (auto elem : squares)
         {
-            if (elem.LB < lower_LB)
-               {
-                   square_lower_LB = elem;
-                   lower_LB = elem.LB;
-               }
+            if (elem->LB < lower_LB)
+            {
+               square_lower_LB = elem;
+               lower_LB = elem->LB;
+            }
         }
         divideSquare(square_lower_LB, squares, Dist); 
     // 3. For each of the small squares an upper bound UB (the value of the objective function at the center of the square) and a lower bound LB are calculated.
@@ -363,10 +372,10 @@ int BSSS(std::vector<double> &Dist, double epsilon) {
     // TODO: Change inneficient way to update the best
         for (auto elem : squares)
         {
-            if (elem.UB_fitness < UBstart_fitness)
+            if (elem->UB_fitness < UBstart_fitness)
             {
-                UBstart_fitness = elem.UB_fitness;
-                UBstar = elem.UB;
+                UBstart_fitness = elem->UB_fitness;
+                UBstar = elem->UB;
             }   
         }
  
@@ -374,7 +383,7 @@ int BSSS(std::vector<double> &Dist, double epsilon) {
         bound = UBstart_fitness * (1.0f - epsilon );
         for (it=squares.begin(); it!=squares.end(); ++it)
         {
-            if ((*it).LB >= bound || sameSquare((*it), square_lower_LB))
+            if ((*it)->LB >= bound || sameSquare((*it), square_lower_LB))
             {
                 squares.erase(it);
             }
