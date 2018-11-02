@@ -416,6 +416,76 @@ void potential(TSolution* &x_new, TSolution* &x_old, double t0, double t)
 }
 
 /******************************************************************************
+ * Basic iterated Local Search
+ * Author: Christian Cintrano
+ * Date: 2018-09-25
+ * Updated: 2018-09-25
+ * Version: 1.0
+ * Implementation of a ILS to solve the p-median problem
+ * ****************************************************************************/
+TSolution* ILS(std::string gen_mode, double gen_param, int kmax, int max_time, std::string next_opt, double *next_opt_param, 
+              std::string shake_opt, std::string ls1, double ls1_param, int n_perturbations)
+{
+    TSolution* xprime;
+    xprime = initial_solution(gen_mode, gen_param);
+
+    log("Initial individual: ", false);
+    if (DEBUG) print_solution(xprime);
+
+    local_search(xprime, ls1, ls1_param);
+
+    log("Initial individual: ", false);
+    if (DEBUG) print_solution(xprime);
+
+    int counter = 0;
+    log("---- G " + std::to_string(counter) + " Max time: " + std::to_string(max_time));
+
+
+    // TIMER
+    int current_time;
+    std::chrono::steady_clock::time_point t_start, t_current;
+    t_start= std::chrono::steady_clock::now();
+    t_current= std::chrono::steady_clock::now();   
+    current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+    // RUN
+
+    TSolution* x;
+    log(std::to_string(current_time));
+    int index = 1;
+    while (index <= kmax && (current_time < max_time)) // General loop
+    { 
+        if (DEBUG)
+        {
+            counter++;
+            if (counter % 50 == 0)
+            {
+                log("---- G " + std::to_string(counter) + " " + std::to_string(xprime->fitness));
+            }
+        }
+
+/*
+        //t = cooling(cooling_opt, cooling_param, t0, index);
+        kindex = next_k(next_opt, index, next_opt_param, kmax);
+        shake(shake_opt, xprime, x, kindex); // xprime = original, x = new
+        local_search(x, ls1, ls1_param);
+        //potential(x, xprime, t0, t); // x = new, xprime = original
+  */
+        //kindex = next_k(next_opt, index, next_opt_param, kmax);
+        shake(shake_opt, xprime, x, n_perturbations);
+        local_search(x, ls1, ls1_param);
+        acceptation("ELITIST", 0, xprime, x); // true if is new optimal
+
+
+        index++;
+
+        t_current= std::chrono::steady_clock::now();  
+        current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count(); 
+    }
+
+    return xprime;
+}
+
+/******************************************************************************
  * Basic Genetic Algorithm
  * Author: Christian Cintrano
  * Date: 2018-03-16
