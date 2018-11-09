@@ -3,9 +3,11 @@
 #include <stdlib.h>     /* srand, rand */
 #include <limits>
 #include <algorithm>    /* find, sort */
+#include <chrono>       /* measure time */
 #include <set>
 #include <map>
 #include "structs.h"
+#include "localsearches.h"
 #include "utilities.h"
 
 using namespace std;
@@ -14,31 +16,31 @@ using namespace std;
 double BSSS_EPSILON = 0.0000000001; 
 
 int BSSS(std::vector<double> &Dist, double epsilon);
-void IMP(TSolution* X, double param);
-void IALT(TSolution* X, double L);
-void ISRW(TSolution* x, int alpha);
-void FI(TSolution* X);
+//void IMP(TSolution* X, double param);
+//void IALT(TSolution* X, double L);
+//void ISRW(TSolution* x, int alpha);
+//void FI(TSolution* X);
 
 
-void local_search(TSolution* x, string ls, double param)
+void local_search(TSolution* x, string ls, double param, int max_time)
 {
     log("-- local search " + ls, false);
     
     if (ls == "IALT")
     {
-        IALT(x, param); // param = Laux
+        IALT(x, param, max_time); // param = Laux
     }
     else if (ls == "IMP")
     {
-        IMP(x, param); // param = epsilon
+        IMP(x, param, max_time); // param = epsilon
     }
     else if (ls == "ISRW")
     {
-        ISRW(x, param); // param = ALPHA
+        ISRW(x, param, max_time); // param = ALPHA
     }
     else if (ls == "FI")
     {
-        FI(x);
+        FI(x, max_time);
     }
     else if (ls == "NONE")
     {
@@ -64,7 +66,7 @@ void printDis(double *Dist)
     std::cout << '\n';
 }
 
-void IMP(TSolution* X, double param) {
+void IMP(TSolution* X, double param, int max_time) {
     std::vector<double> Dist(N);
     int kindex;
     // 1. Obtain a starting solution.
@@ -76,7 +78,16 @@ void IMP(TSolution* X, double param) {
     double previous_fitness;
     double new_fitness;
     double min;
-    while(index) {
+
+    // TIMER
+    int current_time;
+    std::chrono::steady_clock::time_point t_start, t_current;
+    t_start= std::chrono::steady_clock::now();
+    t_current= std::chrono::steady_clock::now();   
+    current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+
+
+    while(index && (current_time < max_time)) {
         index = false;
         // 3. Repeat the following for each facility k in random order.
         std::random_shuffle(individual_index.begin(), individual_index.end());
@@ -122,6 +133,9 @@ void IMP(TSolution* X, double param) {
             }
         }
         // 4. If index=0, stop with the solution being the current locations of the p facilities.
+
+        t_current= std::chrono::steady_clock::now();  
+        current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count(); 
     }
     //log("pre dist");
     Dist.clear();
@@ -567,7 +581,7 @@ void sortDeltas(int *delta, int *indexes, int *sorted)
     //delete delta_sorted;
 }
 
-void IALT(TSolution* X, double L)
+void IALT(TSolution* X, double L, int max_time)
 {
 
     TSolution* Xprime = new TSolution();
@@ -583,7 +597,16 @@ void IALT(TSolution* X, double L)
         I[i] = 0;
     }
     bool first_part_algorithm = true;
-    do { // Step 9
+
+
+        // TIMER
+        int current_time;
+        std::chrono::steady_clock::time_point t_start, t_current;
+        t_start= std::chrono::steady_clock::now();
+        t_current= std::chrono::steady_clock::now();   
+        current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+
+    do { // Step 9        
         while(containsZero(I, P) || !first_part_algorithm) { // Step 5
             if (first_part_algorithm) // Condition to avoid these steps in the step 9 phase
             {
@@ -700,7 +723,11 @@ void IALT(TSolution* X, double L)
         delete [] delta;
         delete [] index_sort;
         delete [] Dist;
-    } while(Xprime->fitness < X->fitness); // Condition of 9
+
+        t_current= std::chrono::steady_clock::now();  
+        current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count(); 
+
+    } while(Xprime->fitness < X->fitness && (current_time < max_time)); // Condition of 9
 
     delete [] a;
     delete Xprime;
@@ -906,13 +933,23 @@ void nearFacility2Customer(int *a_first, int *a_second)
     }
 }
 
-void ISRW(TSolution* x, int alpha)
+void ISRW(TSolution* x, int alpha, int max_time)
 {
+    // TIMER
+    int current_time;
+    std::chrono::steady_clock::time_point t_start, t_current;
+    t_start= std::chrono::steady_clock::now();
+    t_current= std::chrono::steady_clock::now();   
+    current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+
     int j = rand() % P;
     int *a1 = new int[N];
     int *a2 = new int[N];
     nearFacility2Customer(a1, a2);
-    x->individual[j] = FindBestCustomer(j, x, alpha, a1, a2);
+    t_current= std::chrono::steady_clock::now();  
+    current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count(); 
+    if (current_time < max_time)
+        x->individual[j] = FindBestCustomer(j, x, alpha, a1, a2);
     delete a1;
     delete a2;
     x->fitness = fitness(x);
@@ -924,7 +961,7 @@ void ISRW(TSolution* x, int alpha)
 // Whitaker R (1983) A fast algorithm for the greedy interchange for large-scale clustering and median location problems. INFOR 21:95–108
 //------------------------------------------------
 
-void FI(TSolution* x) // TODO: Optimizar estructura de vecinos para tener los mas cercanos
+void FI(TSolution* x, int max_time) // TODO: Optimizar estructura de vecinos para tener los mas cercanos
 {
     double fitness_old = x->fitness;
 
@@ -932,8 +969,15 @@ void FI(TSolution* x) // TODO: Optimizar estructura de vecinos para tener los ma
     int neighbor_best;
     double fitness_new;
 
+    // TIMER
+    int current_time;
+    std::chrono::steady_clock::time_point t_start, t_current;
+    t_start= std::chrono::steady_clock::now();
+    t_current= std::chrono::steady_clock::now();   
+    current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+
     bool restart = true;
-    while(restart) {
+    while(restart && (current_time < max_time)) {
         restart = false;
  
         std::random_shuffle(individual_index.begin(), individual_index.end());
@@ -961,6 +1005,9 @@ void FI(TSolution* x) // TODO: Optimizar estructura de vecinos para tener los ma
 
             iter++;
         }
+
+        t_current= std::chrono::steady_clock::now();  
+        current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count(); 
     }
     x->fitness = fitness_old;
 }

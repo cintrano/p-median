@@ -35,13 +35,19 @@ TSolution* shake_rand_neighborhood(TSolution* x, int i);
 TSolution* VNS(std::string gen_mode, double gen_param, int Kmayus, int kmax, int max_time, std::string next_opt, double *next_opt_param,
               std::string shake_opt, std::string ls1, double ls1_param, std::string ls2, double ls2_param, std::string accept_mode, double accept_param)
 {
+    // TIMER
+    int current_time;
+    std::chrono::steady_clock::time_point t_start, t_current;
+
     TSolution* xprime; 
     xprime = initial_solution(gen_mode, gen_param);
 
     log("Initial individual: ", false);
     if (DEBUG) print_solution(xprime);
 
-    local_search(xprime, ls1, ls1_param);
+                t_current= std::chrono::steady_clock::now();
+                current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+    local_search(xprime, ls1, ls1_param, max_time - current_time);
 
     log("Initial individual: ", false);
     if (DEBUG) print_solution(xprime);
@@ -53,9 +59,6 @@ TSolution* VNS(std::string gen_mode, double gen_param, int Kmayus, int kmax, int
 
     int kindex;
 
-    // TIMER
-    int current_time;
-    std::chrono::steady_clock::time_point t_start, t_current;
     t_start= std::chrono::steady_clock::now();
     t_current= std::chrono::steady_clock::now();   
     current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
@@ -84,7 +87,9 @@ TSolution* VNS(std::string gen_mode, double gen_param, int Kmayus, int kmax, int
 
                 kindex = next_k(next_opt, index, next_opt_param, kmax);
                 shake(shake_opt, xprime, x, kindex);
-                local_search(x, ls2, ls2_param);
+                t_current= std::chrono::steady_clock::now();
+                current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+                local_search(x, ls2, ls2_param, max_time - current_time);
                 restart = acceptation(accept_mode, accept_param, xprime, x); // true if is new optimal
                 
                 index++;
@@ -311,13 +316,19 @@ void potential(TSolution* &x_new, TSolution* &x_old, double t0, double t);
 TSolution* SA(std::string gen_mode, double gen_param, int kmax, int max_time, std::string next_opt, double *next_opt_param,
               std::string shake_opt, std::string cooling_opt, double cooling_param, double t0, std::string ls1, double ls1_param)
 {
+    // TIMER
+    int current_time;
+    std::chrono::steady_clock::time_point t_start, t_current;
+
     TSolution* xprime; 
     xprime = initial_solution(gen_mode, gen_param);
 
     log("Initial individual: ", false);
     if (DEBUG) print_solution(xprime);
 
-    local_search(xprime, ls1, ls1_param);
+                t_current= std::chrono::steady_clock::now();
+                current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+    local_search(xprime, ls1, ls1_param, max_time - current_time);
 
     log("Initial individual: ", false);
     if (DEBUG) print_solution(xprime);
@@ -327,9 +338,6 @@ TSolution* SA(std::string gen_mode, double gen_param, int kmax, int max_time, st
 
     int kindex;
 
-    // TIMER
-    int current_time;
-    std::chrono::steady_clock::time_point t_start, t_current;
     t_start= std::chrono::steady_clock::now();
     t_current= std::chrono::steady_clock::now();   
     current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
@@ -423,16 +431,22 @@ void potential(TSolution* &x_new, TSolution* &x_old, double t0, double t)
  * Version: 1.0
  * Implementation of a ILS to solve the p-median problem
  * ****************************************************************************/
-TSolution* ILS(std::string gen_mode, double gen_param, int kmax, int max_time, std::string next_opt, double *next_opt_param, 
+TSolution* ILS(std::string gen_mode, double gen_param, int kmax, int max_time, 
               std::string shake_opt, std::string ls1, double ls1_param, int n_perturbations)
 {
+    // TIMER
+    int current_time;
+    std::chrono::steady_clock::time_point t_start, t_current;
+
     TSolution* xprime;
     xprime = initial_solution(gen_mode, gen_param);
 
     log("Initial individual: ", false);
     if (DEBUG) print_solution(xprime);
 
-    local_search(xprime, ls1, ls1_param);
+    t_current= std::chrono::steady_clock::now();
+    current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+    local_search(xprime, ls1, ls1_param, max_time - current_time);
 
     log("Initial individual: ", false);
     if (DEBUG) print_solution(xprime);
@@ -441,9 +455,6 @@ TSolution* ILS(std::string gen_mode, double gen_param, int kmax, int max_time, s
     log("---- G " + std::to_string(counter) + " Max time: " + std::to_string(max_time));
 
 
-    // TIMER
-    int current_time;
-    std::chrono::steady_clock::time_point t_start, t_current;
     t_start= std::chrono::steady_clock::now();
     t_current= std::chrono::steady_clock::now();   
     current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
@@ -472,7 +483,10 @@ TSolution* ILS(std::string gen_mode, double gen_param, int kmax, int max_time, s
   */
         //kindex = next_k(next_opt, index, next_opt_param, kmax);
         shake(shake_opt, xprime, x, n_perturbations);
-        local_search(x, ls1, ls1_param);
+
+        t_current= std::chrono::steady_clock::now();
+        current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+        local_search(x, ls1, ls1_param, max_time - current_time);
         acceptation("ELITIST", 0, xprime, x); // true if is new optimal
 
 

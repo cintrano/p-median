@@ -10,7 +10,7 @@ TSolution* VNS(std::string gen_mode, double gen_param, int Kmayus, int kmax, int
 //TSolution VNS(int max_iterations, int max_time, Parameters &param);
 TSolution* SA(std::string gen_mode, double gen_param, int kmax, int max_time, std::string next_opt, double *next_opt_param, 
               std::string shake_opt, std::string cooling_opt, double cooling_param, double t0, std::string ls1, double ls1_param);
-TSolution* ILS(std::string gen_mode, double gen_param, int kmax, int max_time, std::string next_opt, double *next_opt_param, 
+TSolution* ILS(std::string gen_mode, double gen_param, int kmax, int max_time, 
               std::string shake_opt, std::string ls1, double ls1_param, int n_perturbations);
 TSolution* TS(int max_iterations, std::string gen_mode, double gen_param, std::string ls, double ls_param);
 //TSolution TS(int max_iterations, int max_time, Parameters &param);

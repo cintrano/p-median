@@ -202,9 +202,9 @@ void run_algorithm(std::vector<TSolution*> &pop, TSolution* &best)
     }
     if (ALGO == "ILS") // same familly
     {
-        double *next_opt_params = new double[2]{params_double["m"], params_double["lambda"]};
+        //double *next_opt_params = new double[2]{params_double["m"], params_double["lambda"]};
         best = ILS(params_string["init_sol"], params_double["init_sol"], params_int["Gmax"], params_int["MAX_TIME"], 
-                   params_string["VNS_next_opt"], next_opt_params, params_string["shake"],
+                   params_string["shake"],
                    params_string["ls1"], params_double["ls1"], params_int["npert"]);
         pop[0] = best;
     }
