@@ -338,7 +338,7 @@ TSolution* SA(std::string gen_mode, double gen_param, int kmax, int max_time, st
 
     int kindex;
 
-    t_start= std::chrono::steady_clock::now();
+    //t_start= std::chrono::steady_clock::now();
     t_current= std::chrono::steady_clock::now();   
     current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
     // RUN
@@ -444,6 +444,7 @@ TSolution* ILS(std::string gen_mode, double gen_param, int kmax, int max_time,
     log("Initial individual: ", false);
     if (DEBUG) print_solution(xprime);
 
+    t_start= std::chrono::steady_clock::now();
     t_current= std::chrono::steady_clock::now();
     current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
     local_search(xprime, ls1, ls1_param, max_time - current_time);
@@ -455,7 +456,6 @@ TSolution* ILS(std::string gen_mode, double gen_param, int kmax, int max_time,
     log("---- G " + std::to_string(counter) + " Max time: " + std::to_string(max_time));
 
 
-    t_start= std::chrono::steady_clock::now();
     t_current= std::chrono::steady_clock::now();   
     current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
     // RUN
