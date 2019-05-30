@@ -18,6 +18,8 @@
 #include <set>
 #include <map>
 #include <vector>
+#include <list>
+#include <iterator>
 #include "utilities.h"
 #include "structs.h"
 #include "localsearches.h"
@@ -63,6 +65,7 @@ string get_file_name();
 void write_results(string &filename, int time_init, int time_run, int iter, float best, float worst);
 void write_population(string &filename, const std::vector<TSolution*> pop, int size, int ind_size);
 void write_individual(string &filename, TSolution* ind, int ind_size);
+void write_iteration_fitness(std::list<double> &fitness);
 
 
 int main(int argc, char* argv[]) {
@@ -165,6 +168,7 @@ int main(int argc, char* argv[]) {
 void default_params()
 {
     params_bool["DEBUG"] = false;
+    params_bool["SAVING"] = false;
 
     params_int["seed"] = 13;
     params_int["MAX_TIME"] = std::numeric_limits<int>::max(); // Max time for execution in seconds
@@ -183,29 +187,33 @@ void default_params()
 
 void run_algorithm(std::vector<TSolution*> &pop, TSolution* &best)
 {
+    std::list<double> iteration_fitness;
     if (ALGO == "VNS") // same familly
     {
         double *next_opt_params = new double[2]{params_double["m"], params_double["lambda"]};
+        log("-- VNS");
         best = VNS(params_string["init_sol"], params_double["init_sol"], params_int["Kmayus"], params_int["kmax"], params_int["MAX_TIME"], 
                    params_string["VNS_next_opt"], next_opt_params, params_string["shake"], params_string["ls1"], params_double["ls1"], 
-                   params_string["ls2"], params_double["ls2"], params_string["accept"], params_double["accept"]);
+                   params_string["ls2"], params_double["ls2"], params_string["accept"], params_double["accept"], iteration_fitness);
         pop[0] = best;
     }
     if (ALGO == "SA") // same familly
     {
         double *next_opt_params = new double[2]{params_double["m"], params_double["lambda"]};
+        log("-- SA");
         best = SA(params_string["init_sol"], params_double["init_sol"], params_int["Gmax"], params_int["MAX_TIME"], 
                    params_string["VNS_next_opt"], next_opt_params, params_string["shake"],
                    params_string["cooling_opt"], params_double["cooling_opt"], params_double["temperature"],
-                   params_string["ls1"], params_double["ls1"]);
+                   params_string["ls1"], params_double["ls1"], iteration_fitness);
         pop[0] = best;
     }
     if (ALGO == "ILS") // same familly
     {
         //double *next_opt_params = new double[2]{params_double["m"], params_double["lambda"]};
+        log("-- ILS");
         best = ILS(params_string["init_sol"], params_double["init_sol"], params_int["Gmax"], params_int["MAX_TIME"], 
                    params_string["shake"],
-                   params_string["ls1"], params_double["ls1"], params_int["npert"]);
+                   params_string["ls1"], params_double["ls1"], params_int["npert"], iteration_fitness);
         pop[0] = best;
     }
     /*
@@ -221,6 +229,10 @@ void run_algorithm(std::vector<TSolution*> &pop, TSolution* &best)
         GA(params_int["Gmax"], params_int["MAX_TIME"], pop, params_int["POP_SIZE"], params_double["lambda"], params_string["init_sol"], params_double["init_sol"], 
             params_string["sel_mode"], params_string["cross_mode"], params_string["mut_mode"], params_double["mut_prob"], params_string["repl_mode"]);
         best = find_best(pop, params_int["POP_SIZE"]);
+    }
+    if (SAVING)
+    {
+        write_iteration_fitness(iteration_fitness);
     }
 }
 
@@ -560,6 +572,10 @@ void read_args(int size, char* args[])
             {
                 DEBUG = true;
             }
+            if (std::strcmp(args[i], "--evo-fit") == 0)
+            {
+                SAVING = true;
+            }
             if (std::strcmp(args[i], "--seed") == 0)
             {
                 i++;
@@ -597,7 +613,7 @@ void read_args(int size, char* args[])
             {
                 i++;
                 INTERCHANGE = args[i];
-            }           
+            }          
             if (std::strcmp(args[i], "--npert") == 0)
             {
                 i++;
@@ -749,4 +765,29 @@ void write_individual(string &filename, TSolution* ind, int ind_size) {
         myfile.close();
     }
     else std::cout << "Unable to open file";
+}
+
+void write_iteration_fitness(std::list<double> &fitness) {
+    string name = get_file_name();
+    string best_file_name = "evolution";
+    best_file_name.append(name);
+    string filename = PATH + best_file_name;
+
+    ofstream myfile (filename);
+    myfile.precision(std::numeric_limits<double>::digits10);
+    myfile.precision(std::numeric_limits<float>::digits10);
+    if (myfile.is_open())
+    {
+        // Iterating over list elements and write them
+        std::list<double>::iterator it = fitness.begin();
+        while(it != fitness.end())
+        {
+            myfile << (*it) << " ";
+            it++;
+        }
+        myfile << '\n';
+        myfile.close();
+    }
+    else std::cout << "Unable to open file";
+
 }

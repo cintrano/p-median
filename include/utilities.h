@@ -5,6 +5,7 @@
 #include <vector>
 
 extern bool DEBUG;
+extern bool SAVING;
 
 
 void log(const std::string& text, bool break_line = true);

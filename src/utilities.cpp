@@ -16,16 +16,17 @@
 using namespace std;
 
 bool DEBUG = false;
+bool SAVING = false;
 
 
 void log(const std::string& text, bool break_line)
 {
     if (DEBUG)
     {
-        std::cout << text;
+        std::cerr << text;
         if (break_line)
         {
-            std::cout << std::endl;
+            std::cerr << std::endl;
         }
     }
 }
@@ -33,10 +34,10 @@ void log(const char*& text, bool break_line)
 {
     if (DEBUG)
     {
-        std::cout << text;
+        std::cerr << text;
         if (break_line)
         {
-            std::cout << std::endl;
+            std::cerr << std::endl;
         }
     }
 }

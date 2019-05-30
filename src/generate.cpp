@@ -109,6 +109,7 @@ TSolution* new_rand_solution()
 
 TSolution* START_algorithm(double **delta, double theta)
 {
+    log("Generate by START",false);
     std::vector<double> v(F);
     for (int i = 0; i < F; ++i) // TODO Cahange to weights values
     {
@@ -130,6 +131,7 @@ TSolution* START_algorithm(double **delta, double theta)
 
     while(F - removed > P)
     {
+        log(".",false);
         // 1. Find the pair i<j for which Delta_{ij} is minimized.
         int imin = 0, jmin = 0;
         double delta_min = std::numeric_limits<double>::infinity();
@@ -165,14 +167,14 @@ TSolution* START_algorithm(double **delta, double theta)
         for (int r = 0; r < imin; ++r)
         {
             u = (double) rand() / RAND_MAX;
-            float dist = distanceCalculate(facility_points[r][1], facility_points[r][2], facility_points[imin][1], facility_points[imin][2]);
+            double dist = distanceCalculate(facility_points[r][1], facility_points[r][2], facility_points[imin][1], facility_points[imin][2]);
             delta[r][imin] = (v[r]*v[imin]) * (dist) * (theta * u) / (v[r]+v[imin]);
         }
         // Row
         for (int r = imin + 1; r < F; ++r)
         {
             u = (double) rand() / RAND_MAX;
-            float dist = distanceCalculate(facility_points[imin][1], facility_points[imin][2], facility_points[r][1], facility_points[r][2]);
+            double dist = distanceCalculate(facility_points[imin][1], facility_points[imin][2], facility_points[r][1], facility_points[r][2]);
             delta[imin][r] = (v[imin]*v[r]) * (dist) * (theta * u) / (v[imin]+v[r]);
         }
     }

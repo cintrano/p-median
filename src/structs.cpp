@@ -192,35 +192,45 @@ void initialize_distance_matrix_two_points_array()
     }
 }
 
+double distance_between_facilities(int f1, int f2)
+{
+    return distanceCalculate(facility_points[f1][1], facility_points[f1][2], facility_points[f2][1], facility_points[f2][2]);
+}
+
 void initialize_neighborhood() // WARNING Solo es valido para el caso NxN
 {
     unsigned neg_count = 0;
     tempFk = new int[F * k];
     Neighborhood = new int*[F]; // dynamic array (size 10) of pointers to int
-
     std::vector<double> lineD(F);
     //std::vector<double> lineN(F);
+    //std::cerr <<N<<" "<<F<<" ";
     for (int i = 0; i < F; ++i)
     {
+        //std::cerr << "n2-"<<i<<" "<<N<<" "<<F<<" ";
         //Neighborhood[i] = new int[k];
         Neighborhood[i] = (tempFk + i * k);
         std::vector<double> neighbors(k+1);
         for (int line_i = 0; line_i < F; ++line_i)
         {
-            lineD[line_i] = D[i][line_i];
+            lineD[line_i] = distance_between_facilities(i, line_i);//lineD[line_i] = D[i][line_i];
         }
+        //std::cerr << ".";
         kLowest(lineD, N, k+1, neighbors); // first is the same element dist=0
         for (int j = 0; j < k; ++j)
         {
             int index = 0;
             int idx = -1;
+            double dist;
             while(idx == -1) {
-                if (D[i][index] == neighbors[j+1])
+                dist = distance_between_facilities(i, index);//dist = D[i][index];
+                if (dist == neighbors[j+1])
                 {
                     idx = index;
                 }
                 index++;
             }
+        //std::cerr << "-";
             //Neighborhood[i][j] = neighbors[j+1]; // Not take into account the same element
             Neighborhood[i][j] = idx;
             if (Neighborhood[i][j] > N)
@@ -335,6 +345,7 @@ void initialize_neighborhood_quadrants() // WARNING Solo es valido para el caso 
 
 void initialize_nearest()
 {
+    log("initializing nearest...",false);
     Nearest = new int[F];
     int near, current;
     double d_near, d_current;
