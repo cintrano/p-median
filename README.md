@@ -61,6 +61,9 @@ where:
   * `--ga-mut `_`OPT PROB`_  mutation operator of the GA.
   * `--ga-repl `_`OPT`_ replacement operator of the GA.
 
+# Publications
+
+Cintrano C., Chicano F., Stützle T., Alba E. (2018) Studying Solutions of the p-Median Problem for the Location of Public Bike Stations. Advances in Artificial Intelligence. CAEPIA 2018. Lecture Notes in Computer Science, vol 11160. Springer, Cham. DOI: [https://doi.org/10.1007/978-3-030-00374-6_19](https://doi.org/10.1007/978-3-030-00374-6_19)
 
 # Thanks
 
