@@ -6,6 +6,7 @@
 #include <chrono>       /* measure time */
 #include <set>
 #include <map>
+#include <iterator>
 #include "structs.h"
 #include "localsearches.h"
 #include "utilities.h"
@@ -437,7 +438,9 @@ bool containsZero(std::vector<int> &vec, int size) {
 
 void calculateS(const TSolution* x, std::map<int,std::set<int>> &S)
 {
-    int min, current_min, facility;
+    S.clear();
+    double min, current_min;
+    int facility;
     for (int i = 0; i < N; ++i)
     {
         facility = x->individual[0];
@@ -451,6 +454,15 @@ void calculateS(const TSolution* x, std::map<int,std::set<int>> &S)
                 facility = x->individual[j];
             }
         }
+        /*
+        if (S.find(facility) != S.end()) {
+            std::set< int>& s_ref = S[facility];
+            s_ref.insert( i);
+        } else {
+            std::set< int> s;
+            S.insert(std::make_pair(facility, s));
+        }
+        */
         S[facility].insert(i);
     }
 }
@@ -495,17 +507,22 @@ double* centroid(std::set<int> set)
         x += facility_points[elem][2];
         y += facility_points[elem][1];
     }
+    // std::cerr << "\tx=" << x << " \t y=" << y << '\n';
 
     double* yx = new double[2];
     yx[0] = y / (double) set.size();
     yx[1] = x / (double) set.size();
+    // std::cerr << "yx = " << yx[0] << " " << yx[1] << '\n';
     return yx;
 }
 
 int WeberSolver(std::map<int,std::set<int>> &S, int j)
 {
     double* yx = centroid(S[j]);
+                // std::cerr << j << "_______________ " << yx[0] << " " << yx[1] << '\n';
     int i = point_nearest(yx[0], yx[1]);
+    //std::cerr << "_______________ " << j << " " << distanceCalculate(yx[0], yx[1], facility_points[j][1], facility_points[j][2])<< '\n';
+    //std::cerr << "_______________ " << i << " " << distanceCalculate(yx[0], yx[1], facility_points[i][1], facility_points[i][2])<< '\n';
     delete yx;
     return i;
 }
@@ -581,6 +598,19 @@ void sortDeltas(int *delta, int *indexes, int *sorted)
     //delete delta_sorted;
 }
 
+void printS(std::map<int,std::set<int>> myset) {
+    std::map<int,std::set<int>>::iterator it;
+    for(it = myset.begin(); it != myset.end(); ++it)
+    {
+        cout<<it->first<<": {"; //it->first gives you the key of the map.
+
+        //it->second is the value -- the set. Iterate over it.
+        for (set<int>::iterator it2=it->second.begin(); it2!=it->second.end(); it2++)
+            std::cerr<<*it2<<" ";
+        std::cerr<<"}\n";
+    }
+}
+
 void IALT(TSolution* X, double L, int max_time)
 {
 
@@ -608,6 +638,7 @@ void IALT(TSolution* X, double L, int max_time)
 
     do { // Step 9        
         while(containsZero(I, P) || !first_part_algorithm) { // Step 5
+            //printS(S);
             if (first_part_algorithm) // Condition to avoid these steps in the step 9 phase
             {
                 // Step 1
@@ -615,8 +646,21 @@ void IALT(TSolution* X, double L, int max_time)
                 while(I[j] == 1) {
                     j = rand() % P;
                 }
+                int previous = X->individual[j];
                 int Xstar = WeberSolver(S, X->individual[j]);
-                X->individual[j] = Xstar;
+                if (!ind_contains(X, Xstar))
+                {
+                    X->individual[j] = Xstar;
+                    double new_fitness = fitness(X);
+                    if(X->fitness < new_fitness)
+                    {
+                        X->individual[j] = previous;
+                    } else
+                    {
+                        X->fitness = new_fitness;
+                    }
+                }
+                //std::cerr << "\t\t" << Xstar << "\t"  << X->individual[j] << "\t" << X->fitness << "\t" << fitness(X) << "\n";
                 I[j] = 1;
             }
             // Step 3

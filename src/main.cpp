@@ -66,6 +66,7 @@ void write_results(string &filename, int time_init, int time_run, int iter, floa
 void write_population(string &filename, const std::vector<TSolution*> pop, int size, int ind_size);
 void write_individual(string &filename, TSolution* ind, int ind_size);
 void write_iteration_fitness(std::list<double> &fitness);
+void write_iteration_sol(std::list<std::vector<int>> &sols);
 
 
 int main(int argc, char* argv[]) {
@@ -91,6 +92,7 @@ int main(int argc, char* argv[]) {
     if (num_inputs == 2)
     {    
         initialize_distance_matrix_two_points_array();
+        log("\t\t\t D " + std::to_string(D[30][20]));
     }
     if (num_inputs == 1)
     {
@@ -188,13 +190,14 @@ void default_params()
 void run_algorithm(std::vector<TSolution*> &pop, TSolution* &best)
 {
     std::list<double> iteration_fitness;
+    std::list<std::vector<int>> iteration_sol;
     if (ALGO == "VNS") // same familly
     {
         double *next_opt_params = new double[2]{params_double["m"], params_double["lambda"]};
         log("-- VNS");
         best = VNS(params_string["init_sol"], params_double["init_sol"], params_int["Kmayus"], params_int["kmax"], params_int["MAX_TIME"], 
                    params_string["VNS_next_opt"], next_opt_params, params_string["shake"], params_string["ls1"], params_double["ls1"], 
-                   params_string["ls2"], params_double["ls2"], params_string["accept"], params_double["accept"], iteration_fitness);
+                   params_string["ls2"], params_double["ls2"], params_string["accept"], params_double["accept"], iteration_fitness, iteration_sol);
         pop[0] = best;
     }
     if (ALGO == "SA") // same familly
@@ -204,7 +207,7 @@ void run_algorithm(std::vector<TSolution*> &pop, TSolution* &best)
         best = SA(params_string["init_sol"], params_double["init_sol"], params_int["Gmax"], params_int["MAX_TIME"], 
                    params_string["VNS_next_opt"], next_opt_params, params_string["shake"],
                    params_string["cooling_opt"], params_double["cooling_opt"], params_double["temperature"],
-                   params_string["ls1"], params_double["ls1"], iteration_fitness);
+                   params_string["ls1"], params_double["ls1"], iteration_fitness, iteration_sol);
         pop[0] = best;
     }
     if (ALGO == "ILS") // same familly
@@ -213,7 +216,7 @@ void run_algorithm(std::vector<TSolution*> &pop, TSolution* &best)
         log("-- ILS");
         best = ILS(params_string["init_sol"], params_double["init_sol"], params_int["Gmax"], params_int["MAX_TIME"], 
                    params_string["shake"],
-                   params_string["ls1"], params_double["ls1"], params_int["npert"], iteration_fitness);
+                   params_string["ls1"], params_double["ls1"], params_int["npert"], iteration_fitness, iteration_sol);
         pop[0] = best;
     }
     /*
@@ -233,6 +236,7 @@ void run_algorithm(std::vector<TSolution*> &pop, TSolution* &best)
     if (SAVING)
     {
         write_iteration_fitness(iteration_fitness);
+        write_iteration_sol(iteration_sol);
     }
 }
 
@@ -421,6 +425,7 @@ void read_facilities(const std::string& f_facility)
             for (int j = 0; j < 3; ++j)
             {
                 facility_points[i][j] = strtof((result[j]).c_str(),0); 
+                if (DEBUG) cerr << "F["<<i<<"]["<<j<<"]="<<facility_points[i][j] <<"\n";
             }
             i++;
         }
@@ -782,8 +787,42 @@ void write_iteration_fitness(std::list<double> &fitness) {
         std::list<double>::iterator it = fitness.begin();
         while(it != fitness.end())
         {
-            myfile << (*it) << " ";
+            myfile << std::setprecision(std::numeric_limits<long double>::digits10 + 1) << (double) (*it);
+            myfile << " ";
             it++;
+        }
+        myfile << '\n';
+        myfile.close();
+    }
+    else std::cout << "Unable to open file";
+
+}
+
+void write_iteration_sol(std::list<std::vector<int>> &sols) {
+    string name = get_file_name();
+    string best_file_name = "evolution_sol";
+    best_file_name.append(name);
+    string filename = PATH + best_file_name;
+
+    ofstream myfile (filename);
+    if (myfile.is_open())
+    {
+        // Iterating over list elements and write them
+        std::list<std::vector<int>>::iterator it = sols.begin();
+        int iter = 0;
+        while(it != sols.end())
+        {
+            myfile << iter;
+            myfile << " ";
+            std::vector<int> ind = (std::vector<int> ) (*it);
+            for (int i = 0; i < P; ++i)
+            {
+                myfile << ind[i];
+                myfile << " ";
+            }
+            myfile << "\n";
+            it++;
+            iter++;
         }
         myfile << '\n';
         myfile.close();

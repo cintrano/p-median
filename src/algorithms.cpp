@@ -33,20 +33,21 @@ TSolution* shake_rand(TSolution* x, int i);
 TSolution* shake_rand_neighborhood(TSolution* x, int i);
 
 TSolution* VNS(std::string gen_mode, double gen_param, int Kmayus, int kmax, int max_time, std::string next_opt, double *next_opt_param,
-              std::string shake_opt, std::string ls1, double ls1_param, std::string ls2, double ls2_param, std::string accept_mode, double accept_param, std::list<double> &evo_fitness)
+              std::string shake_opt, std::string ls1, double ls1_param, std::string ls2, double ls2_param, std::string accept_mode, double accept_param, std::list<double> &evo_fitness, std::list<std::vector<int>> &evo_sol)
 {
     // TIMER
     int current_time;
     std::chrono::steady_clock::time_point t_start, t_current;
 
-    TSolution* xprime; 
+    TSolution* xprime;
     xprime = initial_solution(gen_mode, gen_param);
 
     log("Initial individual: ", false);
     if (DEBUG) print_solution(xprime);
 
-                t_current= std::chrono::steady_clock::now();
-                current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+    t_start = std::chrono::steady_clock::now();
+    t_current = std::chrono::steady_clock::now();
+    current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
     local_search(xprime, ls1, ls1_param, max_time - current_time);
 
     log("Initial individual: ", false);
@@ -90,10 +91,14 @@ TSolution* VNS(std::string gen_mode, double gen_param, int Kmayus, int kmax, int
                 t_current= std::chrono::steady_clock::now();
                 current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
                 local_search(x, ls2, ls2_param, max_time - current_time);
+                if (DEBUG) print_solution(x);
                 restart = acceptation(accept_mode, accept_param, xprime, x); // true if is new optimal
                 if (SAVING)
                 {
+                    std::cerr << "\t F " << xprime->fitness << "\n";
                     evo_fitness.push_back(xprime->fitness);
+                    std::vector<int> v(xprime->individual);
+                    evo_sol.push_back(v);
                 }
                 index++;
             }
@@ -238,15 +243,9 @@ TSolution* shake_rand_neighborhood(TSolution* x, int i)
 {
     log("\tshake_rand_neighborhood...");
     TSolution* out = new TSolution;
-    log("\t\t\tcoping");
-    if (DEBUG) std::cout << x << "\n";
-    if (DEBUG) std::cout << x->individual[0] << "\n";
-    if (DEBUG) std::cout << x->individual[P-1] << "\n";
     for (int j = 0; j < P; ++j)
     {
         out->individual.push_back(x->individual[j]);
-        if (DEBUG) std::cout << x->individual[j] << " ";
-        log(std::to_string(x->individual[j]) + " ", false);
     }
     log("");
 
@@ -257,7 +256,6 @@ TSolution* shake_rand_neighborhood(TSolution* x, int i)
     }
 
     std::random_shuffle(individual_index.begin(), individual_index.end());
-    log("\t\tbegins");
     std::set<int> checked;
     int position = 0;
     int v, neighbors_index, new_point;
@@ -266,9 +264,6 @@ TSolution* shake_rand_neighborhood(TSolution* x, int i)
     {
         v = out->individual[individual_index[position]]; // size of the neighborhood between facilities
         checked.insert(v);
-        log("\t\t\t" + std::to_string(position));
-        log("\t\t\t" + std::to_string(individual_index[position]));
-        log("\t\t\t" + std::to_string(v));
         std::random_shuffle(neighbors_indexes.begin(), neighbors_indexes.end());
 
         neighbors_index = 0;
@@ -276,29 +271,25 @@ TSolution* shake_rand_neighborhood(TSolution* x, int i)
         checked_previously = checked.find(new_point) != checked.end();
         checked.insert(new_point);
         neighbors_index++;
-        log("\t\t\t\t" + std::to_string(neighbors_index));
-        log("\t\t\t\t" + std::to_string(new_point));
 
         while((neighbors_index < k && ind_contains(out, new_point)) || (neighbors_index < k && checked_previously))
         {
+            //std::cout << "NP "<< new_point;
             new_point = Neighborhood[v][neighbors_indexes[neighbors_index]];
+            //std::cout << " " << new_point << "  ___ ";
             checked_previously = checked.find(new_point) != checked.end();
             checked.insert(new_point);
             neighbors_index++;
-        log("\t\t\t\t" + std::to_string(neighbors_index));
-        log("\t\t\t\t" + std::to_string(new_point));
         }
 
         if (neighbors_index < k)
         {
+            //std::cout << "]   ["<< new_point;
             out->individual[individual_index[position]] = new_point;
         }
         position++;
     }
-    log("\t\tcalculate fitness");
     out->fitness = fitness(out);
-    log("\t\t", false);
-    if (DEBUG) print_solution(out);
     neighbors_indexes.clear();
     checked.clear();
     log("\tend");
@@ -317,7 +308,7 @@ double cooling(std::string mode, double param, double t0, double t);
 void potential(TSolution* &x_new, TSolution* &x_old, double t0, double t);
 
 TSolution* SA(std::string gen_mode, double gen_param, int kmax, int max_time, std::string next_opt, double *next_opt_param,
-              std::string shake_opt, std::string cooling_opt, double cooling_param, double t0, std::string ls1, double ls1_param, std::list<double> &evo_fitness)
+              std::string shake_opt, std::string cooling_opt, double cooling_param, double t0, std::string ls1, double ls1_param, std::list<double> &evo_fitness, std::list<std::vector<int>> &evo_sol)
 {
     // TIMER
     int current_time;
@@ -377,6 +368,8 @@ TSolution* SA(std::string gen_mode, double gen_param, int kmax, int max_time, st
         if (SAVING)
         {
             evo_fitness.push_back(xprime->fitness);
+            std::vector<int> v(xprime->individual);
+            evo_sol.push_back(v);
         }
         log("--- .");
         index++;
@@ -441,7 +434,7 @@ void potential(TSolution* &x_new, TSolution* &x_old, double t0, double t)
  * Implementation of a ILS to solve the p-median problem
  * ****************************************************************************/
 TSolution* ILS(std::string gen_mode, double gen_param, int kmax, int max_time, 
-              std::string shake_opt, std::string ls1, double ls1_param, int n_perturbations, std::list<double> &evo_fitness)
+              std::string shake_opt, std::string ls1, double ls1_param, int n_perturbations, std::list<double> &evo_fitness, std::list<std::vector<int>> &evo_sol)
 {
     // TIMER
     int current_time;
@@ -493,6 +486,8 @@ TSolution* ILS(std::string gen_mode, double gen_param, int kmax, int max_time,
         if (SAVING)
         {
             evo_fitness.push_back(xprime->fitness);
+            std::vector<int> v(xprime->individual);
+            evo_sol.push_back(v);
         }
         index++;
 
