@@ -117,7 +117,7 @@ double distanceCalculate(double x1, double y1, double x2, double y2)
     double y = y1 - y2;
     double dist;
 
-    dist = pow(x, 2) + pow(y, 2); // calculating Euclidean distance
+    dist = (x * x) + (y * y); // calculating Euclidean distance
     dist = sqrt(dist);                  
 
     return dist;
