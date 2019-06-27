@@ -107,9 +107,9 @@ void IMP(TSolution* X, double param, int max_time) {
             }
             facility_location = X->individual[kindex];
             // (b) Relocate facility k by solving the LD1 problem.
-            //log("---");
+            log("---");
             bsss_index = BSSS(Dist, param);
-            //log("__________");
+            log("__________");
             //log(std::to_string(kindex));
             //log(std::to_string(bsss_index));
             in_sol = ind_contains(X, bsss_index);
@@ -280,8 +280,11 @@ TSquare* newSquare(double top, double right, double bottom, double left, const s
     square->right = right;
     square->bottom = bottom;
     square->left = left;
+    log("SS");
     calculateUB(square, Dist);
+    log("SU");
     square->LB = calculateLB(square, Dist);
+    log("SL");
     return square;
 }
 
@@ -302,10 +305,19 @@ void divideSquare(TSquare* &square, std::set<TSquare*> &set, const std::vector<d
     TSquare* s2;
     TSquare* s3;
     TSquare* s4;
+    log("divideSquare");
+    std::cerr << square->top<< "\n";
+    std::cerr << facility_points[square->UB][2]<< "\n";
+    std::cerr <<facility_points[square->UB][1] << "\n";
+    std::cerr << square->left<< "\n";
     s1 = newSquare(square->top, facility_points[square->UB][2], facility_points[square->UB][1], square->left, Dist);
+    log("printSquare(s1)");
     s2 = newSquare(square->top, square->right, facility_points[square->UB][1], facility_points[square->UB][2], Dist);
+    log("printSquare(s2)");
     s3 = newSquare(facility_points[square->UB][1], facility_points[square->UB][2], square->bottom, square->left, Dist);
+    log(printSquare(s3));
     s4 = newSquare(facility_points[square->UB][1], square->right, square->bottom, facility_points[square->UB][2], Dist);
+    log(printSquare(s4));
     set.insert(s1);
     set.insert(s2);
     set.insert(s3);
@@ -355,31 +367,38 @@ int BSSS(std::vector<double> &Dist, double epsilon) {
     first_square->right = max_lon;
     first_square->bottom = min_lat;
     first_square->left = min_lon;
+    log("calculateUB(first_square, Dist);");
     calculateUB(first_square, Dist);
+    log("first_square->LB = calculateLB(first_square, Dist)");
     first_square->LB = calculateLB(first_square, Dist);
+    log(".");
 
-    log(printSquare(first_square));
+    //log(printSquare(first_square));
 
     UBstar = first_square->UB;
     UBstart_fitness = first_square->UB_fitness;
     squares.insert(first_square);
     double bound;
+    log(".");
     while(squares.size() != 0) {//!squares.empty()) {
     // 2. The square with the smallest LB is selected and four small squares are constructed by two perpendicular lines through its center parallel to its sides.
         TSquare* square_lower_LB;
 
+    log("-");
     //log(printSquare(square_lower_LB));
         double lower_LB = std::numeric_limits<double>::infinity();
 
         for (auto elem : squares)
         {
-            if (elem->LB < lower_LB)
+            if (elem->LB <= lower_LB)
             {
                square_lower_LB = elem;
                lower_LB = elem->LB;
             }
         }
+    log("-");
         divideSquare(square_lower_LB, squares, Dist); 
+    log("-");
     // 3. For each of the small squares an upper bound UB (the value of the objective function at the center of the square) and a lower bound LB are calculated.
     // Done in the creation
  
@@ -394,6 +413,7 @@ int BSSS(std::vector<double> &Dist, double epsilon) {
             }   
         }
  
+    log("-");
     // 5. The big square and all squares for which LB>=UB∗(1−epsilon) are discarded from the set of squares. All other squares remain or are added to the set of squares.
         bound = UBstart_fitness * (1.0f - epsilon );
         for (it=squares.begin(); it!=squares.end(); ++it)
