@@ -57,6 +57,8 @@ double fitness_without_weights(TSolution* x)
     return fitness;
 }
 
+std::vector<int> base;
+bool BASE_SOLUTION = false;
 double fitness(TSolution* x)
 {
     double fitness = 0.0;
@@ -69,6 +71,16 @@ double fitness(TSolution* x)
            {
                min = D[i][x->individual[j]];
            }
+        }
+        if (BASE_SOLUTION) // if a base solution is provided
+        {
+            for (auto &item : base)
+            {
+               if (D[i][item] < min)
+               {
+                   min = D[i][item];
+               }
+            }
         }
         fitness = fitness + (min * customer_points[i][0]);
     }

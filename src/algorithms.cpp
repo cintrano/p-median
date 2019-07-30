@@ -33,7 +33,8 @@ TSolution* shake_rand(TSolution* x, int i);
 TSolution* shake_rand_neighborhood(TSolution* x, int i);
 
 TSolution* VNS(std::string gen_mode, double gen_param, int Kmayus, int kmax, int max_time, std::string next_opt, double *next_opt_param,
-              std::string shake_opt, std::string ls1, double ls1_param, std::string ls2, double ls2_param, std::string accept_mode, double accept_param, std::list<double> &evo_fitness, std::list<std::vector<int>> &evo_sol)
+              std::string shake_opt, std::string ls1, double ls1_param, std::string ls2, double ls2_param, std::string accept_mode, double accept_param,
+              std::list<double> &evo_fitness, std::list<std::vector<int>> &evo_sol)
 {
     // TIMER
     int current_time;
@@ -98,6 +99,9 @@ TSolution* VNS(std::string gen_mode, double gen_param, int Kmayus, int kmax, int
                     std::cerr << "\t F " << xprime->fitness << "\n";
                     evo_fitness.push_back(xprime->fitness);
                     std::vector<int> v(xprime->individual);
+                    t_current= std::chrono::steady_clock::now();  
+                    current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count(); 
+                    v.push_back(current_time);
                     evo_sol.push_back(v);
                 }
                 index++;
@@ -369,6 +373,9 @@ TSolution* SA(std::string gen_mode, double gen_param, int kmax, int max_time, st
         {
             evo_fitness.push_back(xprime->fitness);
             std::vector<int> v(xprime->individual);
+            t_current= std::chrono::steady_clock::now();  
+            current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count(); 
+            v.push_back(current_time);
             evo_sol.push_back(v);
         }
         log("--- .");
@@ -487,6 +494,9 @@ TSolution* ILS(std::string gen_mode, double gen_param, int kmax, int max_time,
         {
             evo_fitness.push_back(xprime->fitness);
             std::vector<int> v(xprime->individual);
+            t_current= std::chrono::steady_clock::now();  
+            current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count(); 
+            v.push_back(current_time);
             evo_sol.push_back(v);
         }
         index++;

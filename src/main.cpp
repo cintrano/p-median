@@ -67,6 +67,8 @@ void write_population(string &filename, const std::vector<TSolution*> pop, int s
 void write_individual(string &filename, TSolution* ind, int ind_size);
 void write_iteration_fitness(std::list<double> &fitness);
 void write_iteration_sol(std::list<std::vector<int>> &sols);
+// Auxiliar inputs
+void load_base_solution(const std::string &filename);
 
 
 int main(int argc, char* argv[]) {
@@ -581,6 +583,12 @@ void read_args(int size, char* args[])
             {
                 SAVING = true;
             }
+            if (std::strcmp(args[i], "--base-sol") == 0)
+            {
+                i++;
+                BASE_SOLUTION = true;
+                load_base_solution(args[i]);
+            }
             if (std::strcmp(args[i], "--seed") == 0)
             {
                 i++;
@@ -815,7 +823,7 @@ void write_iteration_sol(std::list<std::vector<int>> &sols) {
             myfile << iter;
             myfile << " ";
             std::vector<int> ind = (std::vector<int> ) (*it);
-            for (int i = 0; i < P; ++i)
+            for (int i = 0; i < P+1; ++i)
             {
                 myfile << ind[i];
                 myfile << " ";
@@ -828,5 +836,26 @@ void write_iteration_sol(std::list<std::vector<int>> &sols) {
         myfile.close();
     }
     else std::cout << "Unable to open file";
+}
 
+
+void load_base_solution(const std::string &filename)
+{
+    log("Reading: " + filename);
+    string line;
+    ifstream myfile(filename);
+    if (myfile.is_open())
+    {
+        while ( getline(myfile,line) )
+        {
+            // line
+            vector<string> result = split(line);
+            for (auto &item : result)
+            {
+                base.push_back(std::stoi(item)); 
+            }
+        }
+        myfile.close();
+    }
+    else std::cout << "Unable to open file\n";
 }

@@ -22,6 +22,9 @@ extern int k;
 extern int *Nearest;
 extern std::vector<int> individual_index;
 
+extern std::vector<int> base;
+extern bool BASE_SOLUTION;
+
 bool ind_contains(TSolution* x, int elem);
 TSolution* find_best(std::vector<TSolution*> pop, int size);
 bool find_in_pop(TSolution *sol, std::vector<TSolution*> pop, int size); // TODO: Improve this function check the solution values
