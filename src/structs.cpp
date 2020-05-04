@@ -64,9 +64,11 @@ double fitness(TSolution* x)
     double fitness = 0.0;
     for (int i = 0; i < N; ++i)
     {
+        //log(std::to_string(D[i][x->individual[0]]) + " ", false);
         double min = D[i][x->individual[0]];
         for (int j = 1; j < P; ++j)
         {
+        //log(std::to_string(D[i][x->individual[j]]) + " ", false);
            if (D[i][x->individual[j]] < min)
            {
                min = D[i][x->individual[j]];
@@ -82,6 +84,7 @@ double fitness(TSolution* x)
                }
             }
         }
+        //log(std::to_string(i));
         fitness = fitness + (min * customer_points[i][0]);
     }
     return fitness;

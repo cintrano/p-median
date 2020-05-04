@@ -1,5 +1,6 @@
 #include <iostream>
 #include <math.h>       /* sin, cos, M_PI, pow */
+#include <cmath>
 #include <chrono>       /* measure time */
 #include <random>
 #include <algorithm>
@@ -812,7 +813,7 @@ void replacement(std::string mode, std::vector<TSolution*> &childrens, int lambd
     if (DEBUG) print_population(pop, mu);
     if (DEBUG) print_population(childrens, lambda);
 
-    if (mode == "mu,lambda")
+    if (mode == "mulambda") // mu,lambda
     {
         std::vector<TSolution*> total;
 
@@ -832,7 +833,7 @@ void replacement(std::string mode, std::vector<TSolution*> &childrens, int lambd
             pop[i] = total[i];
         }
     }
-    if (mode == "mu+lambda")
+    if (mode == "muPLUSlambda") // mu+lambda
     {
         std::vector<TSolution*> total;
 
@@ -980,6 +981,129 @@ TSolution* cupcap(TSolution* p1, TSolution* p2)
     */
     //log("cp3");
     return sol;
+}
+
+/******************************************************************************
+ * Basic Particle Swarm Optimization Algorithm
+ * Author: Christian Cintrano
+ * Date: 2018-03-16
+ * Updated: 2020-04-22
+ * Version: 1.6
+ * Implementation of a PSO to solve the p-median problem
+ * ****************************************************************************/
+//void generate_population(std::vector<TSolution*> &pop, int pop_size, std::string gen_mode, double gen_param, TSolution* &best, TSolution* &worst);
+//void selection(std::string mode, std::vector<TSolution*> &pop, int pop_size, TSolution* &parent1, TSolution* &parent2);
+//TSolution* crossover(std::string mode, TSolution* parent1, TSolution* parent2);
+//void mutation(std::string mode, double prob, TSolution* &ind);
+//int replacement(std::string mode, TSolution* offspring, std::vector<TSolution*> &pop, int pop_size, TSolution* &best, int worst_idx);
+//void replacement(std::string mode, std::vector<TSolution*> &childrens, int lambda, std::vector<TSolution*> &pop, int mu);
+// Crossover options
+//TSolution* merging(TSolution* p1, TSolution* p2);
+//TSolution* cross_1point(TSolution* p1, TSolution* p2);
+//TSolution* cupcap(TSolution* p1, TSolution* p2);
+
+/*
+ * Initialize randomly the velocities vectors
+ */
+void generate_basic_velocities(std::vector<std::vector<float>> &v, unsigned row_size, unsigned dimension_size, int lb, int ub)
+{
+    float min = -1 * abs(ub - lb);
+    float max = abs(ub - lb);
+    for (unsigned int r = 0; r < row_size; ++r)
+    {
+        std::vector<float> row;
+        for (unsigned int i = 0; i < dimension_size; ++i)
+        {
+            double f = (double)rand() / RAND_MAX;
+            row.push_back(min + f * (max - min));
+        }
+        v.push_back(row);
+    }
+}
+
+void PSO(int max_iterations, int max_time, std::vector<TSolution*> &pop, int pop_size, std::string gen_mode, double gen_param, 
+         float omega, float phip, float phig, int lb, int ub)
+{
+    TSolution* best;
+    TSolution* worst;
+    generate_population(pop, pop_size, gen_mode, gen_param, best, worst);
+    log("After population");
+    std::vector<TSolution*> best_positions(pop_size);
+    //update_best_positions(pop, best_positions);
+    for (int i = 0; i < pop_size; ++i)
+    {
+        best_positions[i] = pop[i]; // TODO POSIBLE FALLO DE PUNTEROS
+    }
+    std::vector<std::vector<float>> v;//(pop_size);
+    log("Generating velocities");
+    generate_basic_velocities(v, pop_size, best->individual.size(), lb, ub); // vi <- U(-|bup - blo|, |bup - blo|)
+    //int best_idx = find_idx_of(best, pop, pop_size);
+
+    log("Initial population: ", false);
+    if (DEBUG) print_population(pop, pop_size);
+
+    int g = 0;
+    int counter = 0;
+    log("---- G " + std::to_string(g));
+    // TIMER
+    int current_time;
+    std::chrono::steady_clock::time_point t_start, t_current;
+    t_start= std::chrono::steady_clock::now();
+    t_current= std::chrono::steady_clock::now();   
+    current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+    log("A");
+    float rp, rg;
+    std::vector<int> p, x;
+    while(g < max_iterations && (current_time < max_time))
+    {        
+        log("B");
+        g++;
+        if (DEBUG)
+        {
+            counter++;
+            if (counter % 10 == 0)
+            {
+                log("---- G " + std::to_string(counter));
+            }
+        }
+        log("C");
+        //g = pop[best_idx]->individual; // best position in whole swarm in the previous iteration
+        for (int i = 0; i < pop_size; ++i)
+        {
+        log("D");
+            //p = best_positions[i]->individual;
+            //x = pop[i]->individual;
+            for (unsigned int d = 0; d < pop[i]->individual.size(); ++d)
+            {
+                rp = ((float) rand() / (RAND_MAX));
+                rg = ((float) rand() / (RAND_MAX));
+                v[i][d] = omega * v[i][d] + phip * rp * ((double) best_positions[i]->individual[d] - (double) pop[i]->individual[d]) + phig * rg * ((double) best->individual[d] - pop[i]->individual[d]);
+
+                pop[i]->individual[d] = pop[i]->individual[d] + ((int) v[i][d]);
+                if (pop[i]->individual[d] >= F)
+                {
+                    pop[i]->individual[d] = F-1;
+                }
+                if (pop[i]->individual[d] < 0)
+                {
+                    pop[i]->individual[d] = 0;
+                }
+            }
+        //log("-", false);
+            pop[i]->fitness = fitness(pop[i]);
+        //log("*", false);
+            if (pop[i]->fitness < best_positions[i]->fitness)
+            {
+                best_positions[i] = pop[i]; // TODO POSIBLE ERROR DE PUNTERO
+                if (best_positions[i]-> fitness < best-> fitness)
+                {
+                    best = best_positions[i]; // TODO IGUAL QUE EL ANTERIOR
+                }
+            }
+        }
+        t_current= std::chrono::steady_clock::now();  
+        current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+    }
 }
 
 

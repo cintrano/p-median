@@ -121,7 +121,7 @@ int main(int argc, char* argv[]) {
     std::chrono::steady_clock::time_point time_end;
 
     // Algorithm
-    log("Running algorithm...");
+    log("Running algorithm...", false);
     run_algorithm(pop, best);
 
     time_end= std::chrono::steady_clock::now();
@@ -231,8 +231,16 @@ void run_algorithm(std::vector<TSolution*> &pop, TSolution* &best)
     */
     if (ALGO == "GA") // same familly
     {
-        GA(params_int["Gmax"], params_int["MAX_TIME"], pop, params_int["POP_SIZE"], params_double["lambda"], params_string["init_sol"], params_double["init_sol"], 
-            params_string["sel_mode"], params_string["cross_mode"], params_string["mut_mode"], params_double["mut_prob"], params_string["repl_mode"]);
+        log("-- GA");
+        GA(params_int["Gmax"], params_int["MAX_TIME"], pop, params_int["POP_SIZE"], params_int["lambda"], params_string["init_sol"], params_double["init_sol"], 
+           params_string["sel_mode"], params_string["cross_mode"], params_string["mut_mode"], params_double["mut_prob"], params_string["repl_mode"]);
+        best = find_best(pop, params_int["POP_SIZE"]);
+    }
+    if (ALGO == "PSO") // same familly
+    {
+        log("-- PSO");
+        PSO(params_int["Gmax"], params_int["MAX_TIME"], pop, params_int["POP_SIZE"], params_string["init_sol"], params_double["init_sol"], 
+            params_double["omega"], params_double["phip"], params_double["phig"], 0, F);
         best = find_best(pop, params_int["POP_SIZE"]);
     }
     if (SAVING)
@@ -554,6 +562,10 @@ void read_args(int size, char* args[])
             {
                 i++;
                 params_double["lambda"] = std::stod(args[i]);
+                if (ALGO == "GA")
+                {
+                    params_int["lambda"] = std::stoi(args[i]);
+                }
             }
             if (std::strcmp(args[i], "--m") == 0)
             {
@@ -681,6 +693,21 @@ void read_args(int size, char* args[])
                 i++;
                 params_string["repl_mode"] = args[i];
             }
+            if (std::strcmp(args[i], "--pso-omega") == 0)
+            {
+                i++;
+                params_double["omega"] = std::stod(args[i]);
+            }
+            if (std::strcmp(args[i], "--pso-phip") == 0)
+            {
+                i++;
+                params_double["phip"] = std::stod(args[i]);
+            }
+            if (std::strcmp(args[i], "--pso-phig") == 0)
+            {
+                i++;
+                params_double["phig"] = std::stod(args[i]);
+            }
             i++;
         }
 
@@ -699,6 +726,12 @@ void read_args(int size, char* args[])
         // This could not be parsed into a number so an exception is thrown.
         // atoi() would return 0, which is less helpful if it could be a valid value.
         cerr << "Incorrect format.\n";
+        i = 1;
+        while(i < size) {
+            cerr << args[i] << " ";
+            i++;
+        }
+        cerr << "\n";
     }
 }
 
