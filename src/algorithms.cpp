@@ -530,8 +530,9 @@ TSolution* cupcap(TSolution* p1, TSolution* p2);
 
 
 void GA(int max_iterations, int max_time, std::vector<TSolution*> &pop, int pop_size, int lambda, std::string gen_mode, double gen_param, 
-    std::string sel_mode, std::string cross_mode, std::string mut_mode, double mut_prob, std::string repl_mode)
+    std::string sel_mode, std::string cross_mode, std::string mut_mode, double mut_prob, std::string repl_mode, std::list<double> &evo_fitness, std::list<std::vector<int>> &evo_sol)
 {
+    TSolution* xprime; // Used if SAVING = true
     TSolution* best;
     TSolution* worst;
     generate_population(pop, pop_size, gen_mode, gen_param, best, worst);
@@ -610,6 +611,21 @@ void GA(int max_iterations, int max_time, std::vector<TSolution*> &pop, int pop_
         {
             log("repl ");
             replacement(repl_mode, childrens, lambda, pop, pop_size);
+        }
+        
+        if (SAVING)
+        {
+            for (int sindex = 0; sindex < pop_size; ++sindex)
+            {
+                xprime = pop[sindex];
+                std::cerr << "\t F " << xprime->fitness << "\n";
+                evo_fitness.push_back(xprime->fitness);
+                std::vector<int> v(xprime->individual);
+                t_current= std::chrono::steady_clock::now();  
+                current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count(); 
+                v.push_back(current_time);
+                evo_sol.push_back(v);
+            }
         }
         childrens.clear();
         t_current= std::chrono::steady_clock::now();  
@@ -1021,9 +1037,10 @@ void generate_basic_velocities(std::vector<std::vector<float>> &v, unsigned row_
     }
 }
 
-void PSO(int max_iterations, int max_time, std::vector<TSolution*> &pop, int pop_size, std::string gen_mode, double gen_param, 
-         float omega, float phip, float phig, int lb, int ub)
+void PSO_OLD(int max_iterations, int max_time, std::vector<TSolution*> &pop, int pop_size, std::string gen_mode, double gen_param, 
+         float omega, float phip, float phig, int lb, int ub, std::list<double> &evo_fitness, std::list<std::vector<int>> &evo_sol)
 {
+    TSolution* xprime; // Used if SAVING = true
     TSolution* best;
     TSolution* worst;
     generate_population(pop, pop_size, gen_mode, gen_param, best, worst);
@@ -1051,12 +1068,10 @@ void PSO(int max_iterations, int max_time, std::vector<TSolution*> &pop, int pop
     t_start= std::chrono::steady_clock::now();
     t_current= std::chrono::steady_clock::now();   
     current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
-    log("A");
     float rp, rg;
     std::vector<int> p, x;
     while(g < max_iterations && (current_time < max_time))
     {        
-        log("B");
         g++;
         if (DEBUG)
         {
@@ -1066,11 +1081,9 @@ void PSO(int max_iterations, int max_time, std::vector<TSolution*> &pop, int pop
                 log("---- G " + std::to_string(counter));
             }
         }
-        log("C");
         //g = pop[best_idx]->individual; // best position in whole swarm in the previous iteration
         for (int i = 0; i < pop_size; ++i)
         {
-        log("D");
             //p = best_positions[i]->individual;
             //x = pop[i]->individual;
             for (unsigned int d = 0; d < pop[i]->individual.size(); ++d)
@@ -1101,11 +1114,134 @@ void PSO(int max_iterations, int max_time, std::vector<TSolution*> &pop, int pop
                 }
             }
         }
+
+        if (SAVING)
+        {
+            for (int sindex = 0; sindex < pop_size; ++sindex)
+            {
+                xprime = pop[sindex];
+                std::cerr << "\t F " << xprime->fitness << "\n";
+                evo_fitness.push_back(xprime->fitness);
+                std::vector<int> v(xprime->individual);
+                t_current= std::chrono::steady_clock::now();  
+                current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count(); 
+                v.push_back(current_time);
+                evo_sol.push_back(v);
+            }
+        }
         t_current= std::chrono::steady_clock::now();  
         current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
     }
 }
 
+TSolution* copy(TSolution* x)
+{
+    TSolution* out = new TSolution;
+    for (int j = 0; j < P; ++j)
+    {
+        out->individual.push_back(x->individual[j]);
+    }
+    out->fitness = x->fitness;
+    return out;
+}
+
+void PSO(int max_iterations, int max_time, std::vector<TSolution*> &pop, int pop_size, std::string gen_mode, double gen_param, 
+         float omega, float phip, float phig, int lb, int ub, std::list<double> &evo_fitness, std::list<std::vector<int>> &evo_sol)
+{
+    TSolution* xprime; // Used if SAVING = true
+    TSolution* best;
+    TSolution* worst;
+    generate_population(pop, pop_size, gen_mode, gen_param, best, worst);
+    log("After population");
+    std::vector<TSolution*> best_positions(pop_size);
+    //update_best_positions(pop, best_positions);
+    for (int i = 0; i < pop_size; ++i)
+    {
+        best_positions[i] = pop[i]; // TODO POSIBLE FALLO DE PUNTEROS
+    }
+    std::vector<std::vector<float>> v;//(pop_size);
+    log("Generating velocities");
+    generate_basic_velocities(v, pop_size, best->individual.size(), lb, ub); // vi <- U(-|bup - blo|, |bup - blo|)
+    //int best_idx = find_idx_of(best, pop, pop_size);
+
+    log("Initial population: ", false);
+    if (DEBUG) print_population(pop, pop_size);
+
+    int g = 0;
+    int counter = 0;
+    log("---- G " + std::to_string(g));
+    // TIMER
+    int current_time;
+    std::chrono::steady_clock::time_point t_start, t_current;
+    t_start= std::chrono::steady_clock::now();
+    t_current= std::chrono::steady_clock::now();   
+    current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+    float rp, rg;
+    std::vector<int> p, x;
+    while(g < max_iterations && (current_time < max_time))
+    {        
+        g++;
+        if (DEBUG)
+        {
+            counter++;
+            if (counter % 10 == 0)
+            {
+                log("---- G " + std::to_string(counter));
+            }
+        }
+        //g = pop[best_idx]->individual; // best position in whole swarm in the previous iteration
+        for (int i = 0; i < pop_size; ++i)
+        {
+            //p = best_positions[i]->individual;
+            //x = pop[i]->individual;
+            for (unsigned int d = 0; d < pop[i]->individual.size(); ++d)
+            {
+                rp = ((float) rand() / (RAND_MAX));
+                rg = ((float) rand() / (RAND_MAX));
+                v[i][d] = omega * v[i][d] + phip * rp * ((double) best_positions[i]->individual[d] - (double) pop[i]->individual[d]) + phig * rg * ((double) best->individual[d] - pop[i]->individual[d]);
+
+                pop[i]->individual[d] = pop[i]->individual[d] + ((int) v[i][d]);
+                if (pop[i]->individual[d] >= F)
+                {
+                    pop[i]->individual[d] = F-1;
+                }
+                if (pop[i]->individual[d] < 0)
+                {
+                    pop[i]->individual[d] = 0;
+                }
+            }
+        //log("-", false);
+            pop[i]->fitness = fitness(pop[i]);
+        //log("*", false);
+            if (pop[i]->fitness < best_positions[i]->fitness)
+            {
+                best_positions[i] = copy(pop[i]); // TODO POSIBLE ERROR DE PUNTERO
+                if (best_positions[i]-> fitness < best-> fitness)
+                {
+                    best = copy(best_positions[i]); // TODO IGUAL QUE EL ANTERIOR
+                }
+            }
+        }
+
+        if (SAVING)
+        {
+            for (int sindex = 0; sindex < pop_size; ++sindex)
+            {
+                xprime = pop[sindex];
+                std::cerr << "\t F " << xprime->fitness << "\n";
+                evo_fitness.push_back(xprime->fitness);
+                std::vector<int> v(xprime->individual);
+                t_current= std::chrono::steady_clock::now();  
+                current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count(); 
+                v.push_back(current_time);
+                evo_sol.push_back(v);
+            }
+        }
+        t_current= std::chrono::steady_clock::now();  
+        current_time = std::chrono::duration_cast<std::chrono::seconds> (t_current - t_start).count();
+    }
+    pop = best_positions;
+}
 
 /******************************************************************************
  * Test code to the Tabu Search

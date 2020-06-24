@@ -18,9 +18,9 @@ TSolution* TS(int max_iterations, std::string gen_mode, double gen_param, std::s
 //TSolution TS(int max_iterations, int max_time, Parameters &param);
 TSolution* MM();
 void GA(int max_iterations, int max_time, std::vector<TSolution*> &pop, int pop_size, int lambda, std::string gen_mode, double gen_param, 
-    std::string sel_mode, std::string cross_mode, std::string mut_mode, double mut_prob, std::string repl_mode);
+    std::string sel_mode, std::string cross_mode, std::string mut_mode, double mut_prob, std::string repl_mode, std::list<double> &evo_fitness, std::list<std::vector<int>> &evo_sol);
 void PSO(int max_iterations, int max_time, std::vector<TSolution*> &pop, int pop_size, std::string gen_mode, double gen_param, 
-         float omega, float phip, float phig, int lb, int ub);
+         float omega, float phip, float phig, int lb, int ub, std::list<double> &evo_fitness, std::list<std::vector<int>> &evo_sol);
 
 
 #endif

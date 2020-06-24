@@ -233,14 +233,14 @@ void run_algorithm(std::vector<TSolution*> &pop, TSolution* &best)
     {
         log("-- GA");
         GA(params_int["Gmax"], params_int["MAX_TIME"], pop, params_int["POP_SIZE"], params_int["lambda"], params_string["init_sol"], params_double["init_sol"], 
-           params_string["sel_mode"], params_string["cross_mode"], params_string["mut_mode"], params_double["mut_prob"], params_string["repl_mode"]);
+           params_string["sel_mode"], params_string["cross_mode"], params_string["mut_mode"], params_double["mut_prob"], params_string["repl_mode"], iteration_fitness, iteration_sol);
         best = find_best(pop, params_int["POP_SIZE"]);
     }
     if (ALGO == "PSO") // same familly
     {
         log("-- PSO");
         PSO(params_int["Gmax"], params_int["MAX_TIME"], pop, params_int["POP_SIZE"], params_string["init_sol"], params_double["init_sol"], 
-            params_double["omega"], params_double["phip"], params_double["phig"], 0, F);
+            params_double["omega"], params_double["phip"], params_double["phig"], 0, F, iteration_fitness, iteration_sol);
         best = find_best(pop, params_int["POP_SIZE"]);
     }
     if (SAVING)
